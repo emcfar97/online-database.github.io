@@ -4,10 +4,19 @@
     <title>Database Web App</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="styles/style.css" rel="stylesheet">
+    <link href="styles\styles.css" rel="stylesheet">
     <link rel="manifest" href="/app.webmanifest" crossorigin="use-credentials"/>
   </head>
   <body>
+    <header>
+      <form action="javascript:;" onsubmit=" update_query( this ) ">
+        <input type="search" id="query" name="query" value="Enter tags"></input>
+      </form>
+    </header>
+    <main id="content">
+      <div id="placeholder">Search to bring up content</div>
+    </main>
+    <footer></footer>
   </body>
-  <script src="scripts/main.js" async></script>
+  <script src="scripts\main.js" async></script>
 </html>

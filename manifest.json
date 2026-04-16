@@ -2,7 +2,7 @@
   "short_name": "Database",
   "name": "Database Web App",
   "start_url": ".",
-  "display": "fullscreeen",
+  "display": "fullscreen",
   "theme_color": "black",
   "background_color": "white"
 }

@@ -1,71 +1,13 @@
 const SELECT = 'SELECT * FROM imagedata';
 const mainBody = document.getElementById('content');
 const op = '[<>=!]=?'
-const regexp = '\w+' + op + '[\w\*\.\-\(\)/]+[web(p|m)]?';
-const repexp = '(\w+' + op + ')([\.\w/]+)';
+const regexp = new RegExp(`\\w+${op}[\\w\*\\.\\-\\(\\)/]+[web(p|m)]?`, "i");
+const repexp = new RegExp(`(\\w+${op})([\\.\\w/]+)`, "i");
 var rows = '';
 var data = [];
 var current = [];
 
 function update_query(join = '', where=' WHERE ', having = '', limit=1000) {
-    
-    string = document.getElementById('query').value;
-    query = {};
-
-    // query parsing
-    string.matchAll(regexp).forEach((token) => {
-        
-        string = string.replace(token, '')
-        col, val = re.split(op, token)
-        
-        if (col == 'comic') {
-            
-            token = "comic.parent='" +  val + "'";
-            join = 'JOIN comic ON comic.path=imagedata.path';
-        }
-        else if (col == 'order') {
-
-            order = 'ORDER BY ' + val;
-            return;
-        }
-        else if (col == 'limit') {
-            
-            limit = val;
-            return;
-        }
-        else if (col in ('date', 'date_used')) {
-            
-            operator = token.replace(col, '').replace(val, '');
-            token = 'date_used' + operator + '"' + val + '"';
-        }
-        else if (val.match('\*')) {
-            
-            token = col + ' LIKE "' + val.replace("*", "%") + '"';
-        }
-        else if (val == 'NULL') {
-            
-            neg = ('!' in token) ? 'NOT ' : '';
-            token = neg + 'IS ' + val + '(' + col + ')';
-        }
-        else if (re.search('\D', val)) {
-
-            token = token.replace(repexp, '\x01"\x02"');
-        }
-        query[col] = query.get(col, []) + [token];
-    });
-    // tag parsing
-    if (string.strip()) {
-        
-        query['tags'] = [
-            'MATCH(tags, artist) AGAINST("' + self.tag_parser(string) + '" IN BOOLEAN MODE)'
-            ];
-    }; 
-    if (query) {
-        query.values().forEach((val) => {
-            where += ' AND ' + val ? '(' + " OR ".join(val) + ')' : '';
-        });
-    };
-    query = SELECT + join + where + having + order + ' LIMIT ' + limit;
 
     data = [
         [427429, '1565aa8fd3a6ef6b51c9dcc1c89e9931.webp', ' shimao_kazu ', ' comic censored qwd sex greyscale large_breasts 1boy boots nipples breasts blush monochrome 1girl frills ', 'Explicit', 4, 'Comic', 'nhentai', '2021-08-12', '32c6462423154833', '/g/188625/', 'https://i.nhentai.net/galleries/1032513/13.jpg'],
@@ -80,15 +22,74 @@ function update_query(join = '', where=' WHERE ', having = '', limit=1000) {
         [470285, 'f888d60a4cdb15cd062f585d3d8fcc9c.webp', ' zeroshiki_kouichi ', ' thighhighs censored tongue_out qwd solo ponytail heart mosaic_censor hair_between_eyes open_mouth breasts tongue 1girl comic black_hair purple_hair long_hair shorts nipples testicles penis ass 1boy blush sex large_breasts nude ', 'Explicit', 4, 'Comic', 'nhentai', '2021-09-03', 'e1c7a2e54ca7c636', '/g/265767/', 'https://i.nhentai.net/galleries/1379600/23.jpg']
     ];
     update_gallery(data);
+    return;
+
+    string = document.getElementById('query').value;
+    query = {};
+    matches = string.matchAll(regexp);
+    // query parsing
+    for (const token of matches) {
+        
+        string = string.replace(token, '')
+        col, val = re.split(op, token)
+        
+        if (col == 'comic') {
+            
+            token = `comic.parent=${val}`;
+            join = 'JOIN comic ON comic.path=imagedata.path';
+        }
+        else if (col == 'order') {
+
+            order = `ORDER BY ${val}`;
+            return;
+        }
+        else if (col == 'limit') {
+            
+            limit = val;
+            return;
+        }
+        else if (col in ('date', 'date_used')) {
+            
+            operator = token.replace(col, '').replace(val, '');
+            token = `date_used ${operator} "${val}"`;
+        }
+        else if (val.match('\*')) {
+            
+            token = `${col} LIKE "${val.replace("*", "%")}"`;
+        }
+        else if (val == 'NULL') {
+            
+            neg = ('!' in token) ? 'NOT ' : '';
+            token = `${neg} IS ${val}(${col})`;
+        }
+        else if (re.search('\D', val)) {
+
+            token = token.replace(repexp, '\x01"\x02"');
+        }
+        query[col] = query.get(col, []) + [token];
+    };
+    // tag parsing
+    if (string.strip()) {
+        
+        query['tags'] = [
+            `MATCH(tags, artist) AGAINST("'${self.tag_parser(string)}'" IN BOOLEAN MODE)`
+            ];
+    }; 
+    if (query) {
+        query.values().forEach((val) => {
+            `${where}' AND '${val ? `(${" OR ".join(val)})` : ''}`;
+        });
+    };
+    query = SELECT + join + where + having + order + ' LIMIT ' + limit;
 }
 function update_gallery(data) {
     
     mainBody.innerHTML = ''
 
-    data.forEach((row) => {
+    data.forEach( async (row) => {
         
-        thumbnail = '<img class="thumbnail" src=/images/' + row[1] + '>'
-        filename = '<div class="filename">' + row[1] + '</div>'
+        thumbnail = `<img class="thumbnail" src=/images/${row[1]}>`
+        filename = `<div class="filename">${row[1]}</div>`
         details = (
             '<select class="details">' +
                 '<option>Information</option>' +
@@ -97,35 +98,49 @@ function update_gallery(data) {
         )
         
         rows += (
-            '<button class="row" onclick="select_row(this, event)">' +
-            thumbnail + filename + details + '</button>'
+            `<button class="row" onclick="select_row(this, event)">${thumbnail}${filename}${details}</button>`
             );
         });
+        mainBody.innerHTML = rows;
         
         // rows += (
-        //     '<div class="row"><button class="row-content" onclick="select_row(this, event)">' +
-        //     thumbnail + filename + '</button>' + details + '</div>'
+        //     `<div class="row"><button class="row-content" onclick="select_row(this, event)">${thumbnail}${filename}</button>${details}</div>`
         //     );
         // });
 
-    mainBody.innerHTML = rows;
 }
 function update_row() {
 
 }
 function select_row(row, event) {
 
-    console.log('row')
     mainBody.innerHTML = ''
     current = row;
 
+    navBar = '<div id="navigation" class="normal" onclick="to_gallery()"></div>';
     src = row.children[0].attributes.src.value;
-    image = '<img id="slideshow" src=' + src + '>';
+    image = `<img id="slideshow" class="normal" onclick="toggle_fullscreen()" src=${src}>`;
 
-    pageContent = image;
+    pageContent = navBar + image;
 
     mainBody.innerHTML = pageContent;
 }
-function return_to_gallery() {
+function toggle_fullscreen() {
+    
+    elements = document.getElementsByClassName("fullscreen");
+
+    if (elements.length) {
+        for (const element of elements.children) {
+            element.class = "normal";
+        }
+    }
+    else {
+        elements = document.getElementsByClassName("normal");
+        for (const element of elements.children) {
+            element.class = "fullscreen";
+        }
+    }
+}
+function to_gallery() {
     mainBody.innerHTML = rows;
 }

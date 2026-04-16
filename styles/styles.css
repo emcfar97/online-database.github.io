@@ -41,7 +41,9 @@ body {
   max-width: 99vw;
   max-height: 99vh;
 }
-
+.fullscreen {
+  background-color: black;
+}
 /*.row {
     display: flex;
     flex-direction: row;

@@ -1,24 +1,35 @@
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(registration => {
+        console.log('SW Registered');
+        console.log(registration);
+    }).catch(error => {
+        console.log('SW Registration Failed');
+        console.log(error);
+    });
+}
+
 const SELECT = 'SELECT * FROM imagedata';
 const slideshow = document.getElementById('slideshow');
 const startScreen = document.getElementById('startScreen');
 const gallery = document.getElementById('gallery');
-const op = '[<>=!]=?'
-const regexp = new RegExp(`\\w+${op}[\\w\*\\.\\-\\(\\)/]+[web(p|m)]?`, "i");
-const repexp = new RegExp(`(\\w+${op})([\\.\\w/]+)`, "i");
+const tags = document.getElementById('query');
+const op = /[<>=!]=?/;
+const regexp = new RegExp(`\\w+${op}[\\w\*\\.\\-\\(\\)/]+[web(p|m)]?`, "g", "i");
+const repexp = new RegExp(`(\\w+${op})([\\.\\w/]+)`, "g", "i");
 var rows = '';
 var data = [];
 var current = [];
 
 function update_query(join = '', where=' WHERE ', having = '', limit=1000) {
 
-    string = document.getElementById('query').value;
+    let col, val;
     query = {};
-    matches = string.matchAll(regexp);
+    string = tags.value;
     // query parsing
-    for (const token of matches) {
+    for (const token of string.matchAll(regexp)) {
         
         string = string.replace(token, '')
-        col, val = re.split(op, token)
+        col, val = token[0].split(op);
         
         if (col == 'comic') {
             
@@ -56,10 +67,10 @@ function update_query(join = '', where=' WHERE ', having = '', limit=1000) {
         query[col] = query.get(col, []) + [token];
     };
     // tag parsing
-    if (string.strip()) {
+    if (string.trim()) {
         
         query['tags'] = [
-            `MATCH(tags, artist) AGAINST("'${self.tag_parser(string)}'" IN BOOLEAN MODE)`
+            `MATCH(tags, artist) AGAINST("'${tag_parser(string)}'" IN BOOLEAN MODE)`
             ];
     }; 
     if (query) {
@@ -68,6 +79,25 @@ function update_query(join = '', where=' WHERE ', having = '', limit=1000) {
         });
     };
     query = SELECT + join + where + having + order + ' LIMIT ' + limit;
+}
+function tag_parser(string) {
+    
+        // string = string.sub('([-*]?\w+( OR [-*]?\w+)+)', r'(\x01)')
+        string = string.sub('([-*]?\\w+( OR [-*]?\\w+)+\\*)', '(\x01)');
+        // replace NOT with '-' char
+        string = string.sub('NOT ', '-', string.strip());
+        // // add '+' char
+        string = string.sub('([*]?\\w+|\\([^()]*\\))', '+\x01');
+        string = string.sub('(\\+AND|OR) ', '');
+        string = string.sub('-\\+', '-');
+        // if (not string.search('\\+[\w+\\*\\(]')) {
+        //     string += ' qwd';
+        // }
+        
+        // string = string.replace('++', '+')
+        // string = string.replace('_+(', '_(')
+
+        return string;
 }
 function update_gallery(data) {
     
@@ -98,7 +128,7 @@ function update_row(row, event) {
 }
 function select_row(row, event) {
 
-    current = data[row.id];
+    current = Number(row.id);
     src = row.children[0].src
 
     slideshow.children[1].src = src;
@@ -115,10 +145,10 @@ function to_gallery() {
     slideshow.style.display = 'none';
     startScreen.style.display = 'block';
 }
-function move(delta=1) {
+function move(delta) {
     
-    index = (current + delta) % len(data);
-    path = get_path(data[1]);
+    index = current = (current + delta) % data.length;
+    path = get_path(data[index][1]);
 
     slideshow.children[1].src = path;
 }
